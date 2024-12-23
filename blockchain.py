@@ -5,14 +5,87 @@ from time import time
 from uuid import uuid4
 
 from flask import Flask, jsonify, request
+from urllib.parse import urlparse
 
 class Blockchain(object):
     def __init__(self):
         self.chain = []
         self.current_transactions = []
+        self.nodes = set()
 
         # Create the genesis block (the starting block)
         self.new_block(previous_hash=1, proof=100)
+    
+    def register_node(self, address):
+        """
+        Add a new node to list of nodes
+        Parameters:
+        - address: <str> Address of node
+        Return:
+        - None
+        """
+        
+        parsed_url = urlparse(address)
+        self.nodes.add(parsed_url.netloc)
+    
+    def valid_chain(self, chain):
+        """Determine if a blockchain is valid
+        Parameters:
+        - chain: <list> A blockchain
+        Return:
+        - <bool> True if valid, False if not
+        """
+
+        last_block = chain[0]
+        current_index = 1
+
+        while current_index < len(chain):
+            block = chain[current_index]
+            print(f'{last_block}')
+            print(f'{block}')
+            print("\n---------\n")
+            
+            # Check the hash of block is correct
+            if block['previous_hash'] != self.hash(last_block):
+                return False
+            
+            # Check that proof of work is valid
+            if not self.valid_proof(last_block['proof'], block['proof']):
+                return False
+            
+            last_block = block
+            current_index += 1
+        return True
+    
+    def resolve_conflicts(self):
+        """Consensus algorithm replaces the chain with the longest one in the network.
+        Return:
+        - <bool> True if chain was replaced, False if not
+        """
+
+        neighbors = self.nodes
+        new_chain = None
+
+        # Look for longer chains
+        max_length = len(self.chain)
+
+        # Find and verify chains from all nodes in the network
+        for node in neighbors:
+            response = requests.get(f'http://{node}/chain')
+
+            if response.status_code == 200:
+                length = response.json()['length']
+                chain = response.json()['chain']
+
+                # Check if length is longer and the chain is valid
+                if length > max_length and self.valid_chain(chain):
+                    max_length = length
+                    new_chain = chain
+        
+        if new_chain:
+            self.chain = new_chain
+            return True
+        return False
     
     def new_block(self, proof, previous_hash=None):
         """
@@ -165,6 +238,39 @@ def full_chain():
         'chain': blockchain.chain,
         'length': len(blockchain.chain)
     }
+    return jsonify(response), 200
+
+@app.route('/nodes/register', methods=['POST'])
+def register_nodes():
+    values = request.get_json()
+    nodes = values.get('nodes')
+
+    if nodes is None:
+        return "Error: invalid list of nodes"
+
+    for node in nodes:
+        blockchain.register_node(node)
+    
+    response = {
+        'message': "New nodes have been added",
+        'total_nodes': list(blockchain.nodes)
+    }
+    return jsonify(response), 201
+
+@app.route('/nodes/resolve', methods=['GET'])
+def consensus():
+    replaced = blockchain.resolve_conflicts()
+
+    if replaced:
+        response = {
+            'message': "Chain has been replaced",
+            'new_chain': blockchain.chain
+        }
+    else:
+        response = {
+            'message': "Chain was not replaced",
+            'chain': blockchain.chain
+        }
     return jsonify(response), 200
 
 if __name__ == '__main__':
