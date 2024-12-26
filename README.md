@@ -43,5 +43,5 @@ This is great! We've built a basic blockchain that handles transactions and mini
 
 In our consensus algorithm, we define a consensus by the maximum length of the chain. That is, if a valid chain is found in neighboring nodes, whose length is greater than ours, we replace our chain.
 
-
-
+## Conclusion
+After implementing all of these functionalities, and testing our endpoints with Postman (cURL is also an option) by sending GET and POST requests, we've successfully created a blockchain in Python that demonstrates the fundamentals of blockchain immutability and security.
