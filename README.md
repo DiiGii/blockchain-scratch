@@ -29,7 +29,7 @@ So in our `new_transaction` method, along with later code, we are essentially fo
 Proof-of-work (PoW) is a way to confirm transactions and add new blocks to a blockchain by requiring computers to solve complex math problems. It's like a computational puzzle that's hard to solve but easy to verify.
 
 As an analogy:
-- Imagine a group of people trying to solve a giant Sudoku puzzle. The first person to solve it gets to write the next page in a public notebook (the blockchain). Everyone can easily check if the solution is correct, but it takes a lot of effort to find the solution in the first place.
+- Imagine a group of people trying to solve a giant Sudoku puzzle. The first person to solve it gets to write the next page in a public notebook (the blockchain). Everyone can easily check if the solution (proof) is correct, but it takes a lot of effort to find the solution in the first place.
 
 In our implementation, we simply check if the hash of the last proof and the current proof contains 4 leading zeroes. 
 
